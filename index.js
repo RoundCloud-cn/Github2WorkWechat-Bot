@@ -17,10 +17,11 @@ const actionWords = {
     "renamed": "重命名",
     "added": "加入",
     "removed": "退出",
-    "edited": "权限修改",
+    "edited": "修改",
     "reopened": "重开",
     "published": "发布",
     "unpublished": "删除",
+    "prereleased": "预发布",
 };
 
 const querystring = require('querystring');
@@ -113,10 +114,7 @@ async function handleRelease(body, robotid) {
         robotid
     );
     const { action, release, repository, sender } = body;
-    if (action !== "published" || action !== "unpublished") {
-        return `除非有人发布或删除了已发行版本，否则无需通知机器人`;
-    }
-    const mdMsg = `有人在 [${repository.name}](${repository.html_url}) ${actionWords[action]}了一个Release
+    const mdMsg = `${sender.login} 在 [${repository.name}](${repository.html_url}) ${actionWords[action]}了一个Release
         标题：${release.name}
         版本：${release.tag_name}
         发布者：${sender.login}
