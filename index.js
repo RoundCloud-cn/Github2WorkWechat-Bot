@@ -114,6 +114,7 @@ async function handleRelease(body, robotid) {
         robotid
     );
     const { action, release, repository, sender } = body;
+    if(action === "published" || action === "unpublished" || action === "created" || action === "deleted" || action === "created")
     const mdMsg = `${sender.login} 在 [${repository.name}](${repository.html_url}) ${actionWords[action]}了一个Release
         标题：${release.name}
         版本：${release.tag_name}
