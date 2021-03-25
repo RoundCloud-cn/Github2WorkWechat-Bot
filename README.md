@@ -2,7 +2,7 @@
 
 ### 腾讯云函数部署
 
-1. `git clone https://github.com/LeoEatle/git-webhook-wework-robot.git`
+1. `git clone https://github.com/RoundCloud-cn/Github2WorkWechat-Bot.git`
 2. 注册并登陆腾讯云管理后台，新建一个云函数，可以先选个Node的Helloworld模板
 3. 将代码目录上传
 4. 点击保存（保存后可以测试试试）
