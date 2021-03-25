@@ -56,10 +56,10 @@ async function handlePush(body, robotid) {
     const user_name = pusher.name;
     const lastCommit = commits[0];
     msg = `项目 ${repository.name} 收到了一次push，提交者：${user_name}，最新提交信息：${lastCommit.message}`;
-    const mdMsg = `项目 [${repository.name}](${repository.url}) 收到一次push提交
-        提交者:  \<font color= \"commit\"\>${user_name}\</font\>
-        分支:  \<font color= \"commit\"\>${ref}\</font\>
-        最新提交信息: ${lastCommit.message}`;
+    const mdMsg = `**项目 [${repository.name}](${repository.url}) 收到一次push提交**
+    提交者:  \<font color= \"commit\"\>${user_name}\</font\>
+    分支:  \<font color= \"commit\"\>${ref}\</font\>
+    最新提交信息: ${lastCommit.message}`;
     await robot.sendMdMsg(mdMsg);
     return mdMsg;
 }
@@ -74,11 +74,11 @@ async function handlePR(body, robotid) {
         robotid
     );
     const {action, sender, pull_request, repository} = body;
-    const mdMsg = `${sender.login}在 [${repository.full_name}](${repository.html_url}) ${actionWords[action]}了PR
-        标题：${pull_request.title}
-        源分支：${pull_request.head.ref}
-        目标分支：${pull_request.base.ref}
-        [查看PR详情](${pull_request.html_url})`;
+    const mdMsg = `**${sender.login}在 [${repository.full_name}](${repository.html_url}) ${actionWords[action]}了PR**
+    标题：${pull_request.title}
+    源分支：${pull_request.head.ref}
+    目标分支：${pull_request.base.ref}
+    [查看PR详情](${pull_request.html_url})`;
     await robot.sendMdMsg(mdMsg);
     return mdMsg;
 }
@@ -96,10 +96,10 @@ async function handleIssue(body, robotid) {
     if (action !== "opened") {
         return `除非有人开启新的issue，否则无需通知机器人`;
     }
-    const mdMsg = `有人在 [${repository.name}](${repository.html_url}) ${actionWords[action]}了一个issue
-        标题：${issue.title}
-        发起人：[${issue.user.login}](${issue.user.html_url})
-        [查看详情](${issue.html_url})`;
+    const mdMsg = `**有人在 [${repository.name}](${repository.html_url}) ${actionWords[action]}了一个issue**
+    标题：${issue.title}
+    发起人：[${issue.user.login}](${issue.user.html_url})
+    [查看详情](${issue.html_url})`;
     await robot.sendMdMsg(mdMsg);
     return;
 }
@@ -113,16 +113,30 @@ async function handleRelease(body, robotid) {
     const robot = new ChatRobot(
         robotid
     );
-    const { action, release, repository, sender } = body;
-    if (action !== "published" && action !== "unpublished" && action !== "created" && action !== "deleted" && action !== "created")
-        return `Release Action无效值`
-    const mdMsg = `${sender.login} 在 [${repository.name}](${repository.html_url}) ${actionWords[action]}了一个Release
-        标题：${release.name}
-        版本：${release.tag_name}
-        发布者：${sender.login}
-        [查看详情](${release.html_url})`;
-    await robot.sendMdMsg(mdMsg);
-    return mdMsg;
+    const { action, release, repository, sender, changes } = body;
+    if (action == "published" && action == "unpublished") {
+        const mdMsg = `**${sender.login} 在仓库 [${repository.name}](${repository.html_url}) ${actionWords[action]}了一个Release**
+    标题：${release.name}
+    版本：${release.tag_name}
+    发布者：${sender.login}
+    [查看详情](${release.html_url})`;
+        await robot.sendMdMsg(mdMsg);
+        return mdMsg;
+    }
+    else if (action == "edited") {
+        const mdMsg = `**${sender.login} 在仓库 [${repository.name}](${repository.html_url}) ${actionWords[action]}了一个Release**
+    标题：${release.name}
+    原内容：${changes[body][from]}
+    新内容：${release.body}
+    版本：${release.tag_name}
+    发布者：${sender.login}
+    [查看详情](${release.html_url})`;
+        await robot.sendMdMsg(mdMsg);
+        return mdMsg;
+    }
+    else
+        return `Release Action无效值：${action}`
+    
 }
 
 /**
@@ -134,17 +148,57 @@ async function handleRepository(body, robotid) {
     const robot = new ChatRobot(
         robotid
     );
-    let msg;
-    const { action, repository, sender } = body;
-    if (action !== "created" || action !== "deleted" || action !== "renamed") {
-        return `除非有人开启、删除、重命名仓库，否则无需通知机器人`;
+    const { action, repository, sender, changes } = body;
+    if (action == "created") {
+        const mdMsg = `**${sender.login} 创建了一个仓库**
+    仓库名：${repository.full_name}
+    描述：${repository.description}`;
+        if (repository.license != null) {
+            mdMsg += "\n\t遵循 ${repository.license} 开源协议";
+        }
+        mdMsg += `\n\t发起人：[${sender.login}](${sender.html_url})
+    [查看详情](${repository.html_url})`;
+        if (repository.fork == true)
+            mdMsg += "\n\t此仓库为Fork仓库";
+        await robot.sendMdMsg(mdMsg);
+        return mdMsg;
     }
-    const mdMsg = `${sender.login} ${actionWords[action]} 了一个仓库
-        仓库名：${repository.name}
-        发起人：[${sender.login}](${sender.html_url})
-        [查看详情](${repository.html_url})`;
-    await robot.sendMdMsg(mdMsg);
-    return mdMsg;
+    else if (action == "deleted") {
+        const mdMsg = `**仓库 ${repository.full_name} 被删除**
+    操作人：[${sender.login}](${sender.html_url})
+    [查看详情](${repository.html_url})`;
+        await robot.sendMdMsg(mdMsg);
+        return mdMsg;
+    }
+    else if (action == "publicized") {
+        const mdMsg = `**仓库 ${repository.full_name} 被设为了公有**
+    操作人：[${sender.login}](${sender.html_url})
+    [查看详情](${repository.html_url})`;
+        await robot.sendMdMsg(mdMsg);
+        return mdMsg;
+    }
+    else if (action == "privatized") {
+        const mdMsg = `**仓库 ${repository.full_name} 被设为了私有**
+    操作人：[${sender.login}](${sender.html_url})
+    [查看详情](${repository.html_url})`;
+        await robot.sendMdMsg(mdMsg);
+        return mdMsg;
+    }
+    else if (action == "renamed") {
+        const mdMsg = `**仓库 ${changes[repository][name]} 被重命名为 ${repository.full_name}**
+    操作人：[${sender.login}](${sender.html_url})
+    [查看详情](${repository.html_url})`;
+        await robot.sendMdMsg(mdMsg);
+        return mdMsg;
+    }
+    else if (action == "edited") {
+        const mdMsg = `**仓库 ${repository.full_name} 被修改**
+    修改内容：${changes[body][from]} -> ${repository.body}
+    操作人：[${sender.login}](${sender.html_url})
+    [查看详情](${repository.html_url})`;
+        await robot.sendMdMsg(mdMsg);
+        return mdMsg;
+    }
 }
 
 /**
@@ -176,10 +230,10 @@ async function handleTeam(body, robotid) {
     );
     let msg;
     const { action, team, sender } = body;
-    const mdMsg = `${sender.login} ${actionWords[action]} 了一个团队
-        团队：[${team.name}](${team.html_url})
-        描述：${team.description}
-        操作员：[${sender.login}](${sender.html_url})`
+    const mdMsg = `**${sender.login} ${actionWords[action]} 了一个团队**
+    团队：[${team.name}](${team.html_url})
+    描述：${team.description}
+    操作员：[${sender.login}](${sender.html_url})`
     await robot.sendMdMsg(mdMsg);
     return mdMsg;
 }
@@ -195,11 +249,11 @@ async function handleBoard(body, robotid) {
     );
     let msg;
     const { action, project, sender } = body;
-    const mdMsg = `${ sender.login } ${ actionWords[action] } 了项目版${ project.name }
-        看板：[${ project.name }](${ project.html_url })
-        描述：${ project.body }
-        操作员：[${ sender.login }](${ sender.html_url })
-        [查看详情](${ project.html_url })`
+    const mdMsg = `**${ sender.login } ${ actionWords[action] } 了项目版${ project.name }**
+    看板：[${ project.name }](${ project.html_url })
+    描述：${ project.body }
+    操作员：[${ sender.login }](${ sender.html_url })
+    [查看详情](${ project.html_url })`
     await robot.sendMdMsg(mdMsg);
     return mdMsg;
 }
