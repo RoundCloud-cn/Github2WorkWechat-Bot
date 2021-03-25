@@ -114,7 +114,7 @@ async function handleRelease(body, robotid) {
         robotid
     );
     const { action, release, repository, sender, changes } = body;
-    if (action == "published" && action == "unpublished") {
+    if (action == "released" && action == "deleted") {
         const mdMsg = `**${sender.login} 在仓库 [${repository.name}](${repository.html_url}) ${actionWords[action]}了一个Release**
     标题：${release.name}
     版本：${release.tag_name}
@@ -126,7 +126,7 @@ async function handleRelease(body, robotid) {
     else if (action == "edited") {
         const mdMsg = `**${sender.login} 在仓库 [${repository.name}](${repository.html_url}) ${actionWords[action]}了一个Release**
     标题：${release.name}
-    原内容：${changes[body][from]}
+    原内容：${changes.body.from}
     新内容：${release.body}
     版本：${release.tag_name}
     发布者：${sender.login}
