@@ -114,7 +114,7 @@ async function handleRelease(body, robotid) {
         robotid
     );
     const { action, release, repository, sender, changes } = body;
-    if (action == "released" && action == "deleted") {
+    if (action == "published" || action == "deleted") {
         const mdMsg = `**${sender.login} 在仓库 [${repository.name}](${repository.html_url}) ${actionWords[action]}了一个Release**
     标题：${release.name}
     版本：${release.tag_name}
@@ -123,7 +123,7 @@ async function handleRelease(body, robotid) {
         await robot.sendMdMsg(mdMsg);
         return mdMsg;
     }
-    else if (action == "edited") {
+    else if (action == "edited" && release.body.from != "undefined") {
         const mdMsg = `**${sender.login} 在仓库 [${repository.name}](${repository.html_url}) ${actionWords[action]}了一个Release**
     标题：${release.name}
     原内容：${changes.body.from}
@@ -134,8 +134,8 @@ async function handleRelease(body, robotid) {
         await robot.sendMdMsg(mdMsg);
         return mdMsg;
     }
-    else
-        return `Release Action无效值：${action}`
+    
+    return `Release Action无效值：${action}`
     
 }
 
